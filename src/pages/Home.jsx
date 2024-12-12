@@ -60,13 +60,13 @@ function Home() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white p-6 rounded-lg shadow">
+    <div className="page-container space-y-8">
+      <div className="card p-6">
         <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <input
               type="text"
-              placeholder="Search recipes by title or ingredients..."
+              placeholder="Search recipes..."
               className="input-field"
               value={filters.searchTerm}
               onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
@@ -92,43 +92,33 @@ function Home() {
 
       {loading ? (
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
-          <p className="mt-2 text-gray-600">Loading recipes...</p>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary-600 border-t-transparent"></div>
+          <p className="mt-2 text-secondary-600">Loading recipes...</p>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {recipes.map((recipe) => (
-              <div key={recipe.id} className="h-full">
-                <RecipeCard
-                  recipe={recipe}
-                  className="h-full"
-                />
-              </div>
+              <RecipeCard key={recipe.id} recipe={recipe} />
             ))}
           </div>
 
           {recipes.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-600">No recipes found.</p>
+              <p className="text-secondary-600">No recipes found.</p>
             </div>
           )}
 
           {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-8">
-              <div className="text-sm text-gray-600">
-                Showing page {filters.page} of {totalPages}
-              </div>
-              
-              <div className="flex items-center space-x-2">
+            <div className="flex justify-center mt-8">
+              <nav className="flex items-center gap-2">
                 <button
                   onClick={() => handlePageChange(filters.page - 1)}
                   disabled={filters.page === 1}
-                  className="px-3 py-1 rounded bg-gray-100 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-secondary disabled:opacity-50"
                 >
                   Previous
                 </button>
-
                 <div className="flex items-center space-x-1">
                   {[...Array(totalPages)].map((_, i) => {
                     const page = i + 1
@@ -162,15 +152,14 @@ function Home() {
                     return null
                   })}
                 </div>
-
                 <button
                   onClick={() => handlePageChange(filters.page + 1)}
                   disabled={filters.page === totalPages}
-                  className="px-3 py-1 rounded bg-gray-100 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-secondary disabled:opacity-50"
                 >
                   Next
                 </button>
-              </div>
+              </nav>
             </div>
           )}
         </>

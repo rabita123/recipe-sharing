@@ -10,7 +10,7 @@ class AuthError extends Error {
 
 export const recipesService = {
   async checkAuth() {
-    const user = await supabase.auth.getUser()
+    const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new AuthError()
     return user
   },
@@ -215,12 +215,15 @@ export const recipesService = {
       // Transform data to ensure image URLs are absolute
       const transformedData = data?.map(recipe => ({
         ...recipe,
-        images: recipe.images?.map(image => ({
-          ...image,
-          image_url: image.image_url?.startsWith('http')
-            ? image.image_url
-            : `${supabase.supabaseUrl}/storage/v1/object/public/recipe-images/${image.image_url}`
-        }))
+        images: recipe.images?.map(image => {
+          if (!image?.image_url) return null;
+          return {
+            ...image,
+            image_url: image.image_url?.startsWith('http')
+              ? image.image_url
+              : `${supabase.supabaseUrl}/storage/v1/object/public/recipe-images/${image.image_url}`
+          }
+        }).filter(Boolean)
       }))
 
       if (error) throw error
@@ -327,6 +330,64 @@ export const recipesService = {
     } catch (error) {
       console.error('Error updating profile:', error)
       throw new Error('Failed to update profile')
+    }
+  },
+
+  async updateRecipe(id, recipeData) {
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new AuthError()
+
+      console.log('Updating recipe:', { id, recipeData })
+
+      // First verify if recipe exists and user has permission
+      const { data: existingRecipe, error: fetchError } = await supabase
+        .from('recipes')
+        .select('user_id')
+        .eq('id', id)
+        .single()
+
+      if (fetchError) {
+        console.error('Error fetching recipe:', fetchError)
+        throw new Error('Recipe not found')
+      }
+
+      if (existingRecipe.user_id !== user.id) {
+        throw new Error('You do not have permission to edit this recipe')
+      }
+
+      const { error } = await supabase
+        .from('recipes')
+        .update({
+          title: recipeData.title,
+          ingredients: recipeData.ingredients,
+          steps: recipeData.steps,
+          cooking_time: recipeData.cooking_time,
+          diet_type: recipeData.diet_type
+        })
+        .eq('id', id)
+
+      if (error) {
+        console.error('Error updating recipe:', error)
+        throw error
+      }
+
+      // Handle image updates if provided
+      if (recipeData.newImage) {
+        const imageUrl = await uploadRecipeImage(recipeData.newImage, id)
+        await supabase
+          .from('images')
+          .upsert({
+            recipe_id: id,
+            image_url: imageUrl
+          })
+      }
+
+      return { success: true }
+    } catch (error) {
+      console.error('Error in updateRecipe:', error)
+      throw new Error(error.message || 'Failed to update recipe')
     }
   }
 } 

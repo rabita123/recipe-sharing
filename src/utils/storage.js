@@ -2,6 +2,10 @@ import { supabase } from '../services/supabase'
 
 export async function uploadRecipeImage(file, recipeId) {
   try {
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Authentication required')
+
     // Validate file
     if (!file) throw new Error('No file provided')
     if (!file.type.startsWith('image/')) {
@@ -13,7 +17,7 @@ export async function uploadRecipeImage(file, recipeId) {
 
     // Create unique file path
     const fileExt = file.name.split('.').pop()
-    const fileName = `${recipeId}_${Date.now()}.${fileExt}`
+    const fileName = `${user.id}/${recipeId}_${Date.now()}.${fileExt}`
 
     console.log('Uploading file:', { fileName, fileSize: file.size })
 
@@ -22,7 +26,8 @@ export async function uploadRecipeImage(file, recipeId) {
       .from('recipe-images')
       .upload(fileName, file, {
         cacheControl: '3600',
-        upsert: false
+        upsert: true,
+        contentType: file.type
       })
 
     if (uploadError) {
@@ -30,18 +35,24 @@ export async function uploadRecipeImage(file, recipeId) {
       throw uploadError
     }
 
-    // Get public URL with full path
+    // Get public URL
     const { data: { publicUrl } } = supabase.storage
       .from('recipe-images')
       .getPublicUrl(fileName)
 
-    // Ensure the URL is absolute
-    const fullUrl = publicUrl.startsWith('http') 
-      ? publicUrl 
-      : `${supabase.supabaseUrl}/storage/v1/object/public/recipe-images/${fileName}`
+    // Verify the URL is accessible
+    try {
+      const response = await fetch(publicUrl, { method: 'HEAD' })
+      if (!response.ok) {
+        throw new Error('Image URL is not accessible')
+      }
+    } catch (error) {
+      console.error('URL verification failed:', error)
+      throw new Error('Failed to verify image URL')
+    }
 
-    console.log('Generated public URL:', fullUrl)
-    return fullUrl
+    console.log('Generated public URL:', publicUrl)
+    return publicUrl
   } catch (error) {
     console.error('Error uploading image:', error)
     throw new Error('Failed to upload image: ' + error.message)
