@@ -61,13 +61,32 @@ export async function uploadRecipeImage(file, recipeId) {
 
 export async function deleteRecipeImage(imagePath) {
   try {
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Authentication required')
+
+    // Clean up the image path
+    // Remove any URL parts and get just the path after recipe-images/
+    imagePath = imagePath.includes('recipe-images/') 
+      ? imagePath.split('recipe-images/').pop()
+      : imagePath.replace(/^\/+/, '')
+
+    if (!imagePath) {
+      throw new Error('Invalid image path')
+    }
+
+    console.log('Deleting image:', imagePath)
+
     const { error } = await supabase.storage
       .from('recipe-images')
       .remove([imagePath])
 
-    if (error) throw error
+    if (error) {
+      console.error('Storage delete error:', error)
+      throw error
+    }
   } catch (error) {
     console.error('Error deleting image:', error)
-    throw new Error('Failed to delete image')
+    throw new Error('Failed to delete image: ' + error.message)
   }
 } 

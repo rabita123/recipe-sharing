@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="300" version="1.1" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#f3f4f6"/>
+  <g fill="#9ca3af">
+    <path d="m200 130c-11.046 0-20 8.954-20 20s8.954 20 20 20 20-8.954 20-20-8.954-20-20-20zm0 30c-5.523 0-10-4.477-10-10s4.477-10 10-10 10 4.477 10 10-4.477 10-10 10z"/>
+    <path d="m160 90h80v120h-80z" opacity=".2"/>
+    <text x="200" y="170" text-anchor="middle" font-family="Arial" font-size="16">No Image</text>
+  </g>
+</svg> 

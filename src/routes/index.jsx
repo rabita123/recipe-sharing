@@ -50,7 +50,7 @@ function AppRoutes() {
       />
       
       <Route 
-        path="/recipe/:id" 
+        path="/recipes/:id" 
         element={<RecipeDetails />} 
       />
       

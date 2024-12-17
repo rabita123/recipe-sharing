@@ -31,9 +31,9 @@ function Profile() {
     try {
       setLoading(true)
       console.log('Fetching recipes for user:', user.id)
-      const { data } = await recipesService.getUserRecipes(user.id)
+      const { data: recipes, count } = await recipesService.getUserRecipes(user.id)
       
-      if (!data || data.length === 0) {
+      if (!recipes || recipes.length === 0) {
         console.log('No recipes found')
         setRecipes([])
         setStats({
@@ -44,14 +44,14 @@ function Profile() {
         return
       }
 
-      console.log('Recipes loaded:', data)
-      setRecipes(data)
+      console.log('Recipes loaded:', { recipes, count })
+      setRecipes(recipes)
       
       // Calculate stats
       setStats({
-        totalRecipes: data.length,
-        totalViews: data.reduce((sum, recipe) => sum + (recipe.views || 0), 0),
-        mostPopularRecipe: data.reduce((prev, current) => 
+        totalRecipes: count,
+        totalViews: recipes.reduce((sum, recipe) => sum + (recipe.views || 0), 0),
+        mostPopularRecipe: recipes.reduce((prev, current) => 
           (prev?.views || 0) > (current?.views || 0) ? prev : current
         , null)
       })
